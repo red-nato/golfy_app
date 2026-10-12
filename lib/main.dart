@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 void main() {
   runApp(const MyApp());
 }
@@ -28,12 +28,69 @@ class MyApp extends StatelessWidget {
         //
         // This works for code too, not just values: Most code changes can be
         // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: .fromSeed(seedColor: Colors.purple),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const GoogleBottomBar(),
     );
   }
 }
+
+class GoogleBottomBar extends StatefulWidget {
+  const GoogleBottomBar({super.key});
+
+  @override
+  State<GoogleBottomBar> createState() => _GoogleBottomBarState();
+}
+
+class _GoogleBottomBarState extends State<GoogleBottomBar> {
+  int _selectedIndex = 0;
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Golfy Test')),
+      body: Center(child: _navBarItems[_selectedIndex].title),
+      bottomNavigationBar: SalomonBottomBar(
+        currentIndex: _selectedIndex,
+        selectedItemColor: const Color(0xff6200ee),
+        unselectedItemColor: const Color(0xff757575),
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+        items: _navBarItems,
+      ),
+    );
+  }
+}
+
+final _navBarItems = [
+  SalomonBottomBarItem(
+    icon: const Icon(Icons.home),
+    title: const Text("Inicio"),
+    selectedColor: Colors.purple,
+  ),
+  SalomonBottomBarItem(
+    icon: const Icon(Icons.insights),
+    title: const Text("Mediciones"),
+    selectedColor: Colors.orange,
+  ),
+    SalomonBottomBarItem(
+    icon: const Icon(Icons.monitor_heart),
+    title: const Text("Carga"),
+    selectedColor: Colors.teal,
+  ),
+  SalomonBottomBarItem(
+    icon: const Icon(Icons.favorite_border),
+    title: const Text("Bienestar"),
+    selectedColor: Colors.pink,
+  ),
+  SalomonBottomBarItem(
+    icon: const Icon(Icons.person),
+    title: const Text("Profile"),
+    selectedColor: Colors.teal,
+  ),
+];
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
