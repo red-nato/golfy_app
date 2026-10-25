@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+
 import 'nueva_medicion_page.dart';
+import '../widgets/golf_identity.dart';
 
 const _green = Color(0xFF14573A);
 
@@ -70,7 +72,6 @@ class _MedicionesPageState extends State<MedicionesPage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final serie = _series[_tipo];
 
     return SingleChildScrollView(
@@ -78,11 +79,11 @@ class _MedicionesPageState extends State<MedicionesPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Mediciones',
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+          const GolfHeading(
+            title: 'Conoce tu evolución',
+            subtitle: 'Pequeños cambios. Un juego más sólido.',
+            icon: Icons.insights_rounded,
+            hole: '02 / MEDICIONES',
           ),
           const SizedBox(height: 16),
           _Selector(
@@ -94,9 +95,8 @@ class _MedicionesPageState extends State<MedicionesPage> {
           const SizedBox(height: 18),
           Text(
             'Historial',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+            style: Theme.of(context).textTheme.titleMedium
+                ?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
           _Historial(filas: serie.historial),
@@ -130,7 +130,12 @@ class _Selector extends StatelessWidget {
             Expanded(
               child: GestureDetector(
                 onTap: () => onChanged(i),
-                child: Container(
+                child: AnimatedContainer(
+                  duration: Duration(
+                    milliseconds: MediaQuery.disableAnimationsOf(context)
+                        ? 0
+                        : 240,
+                  ),
                   height: 44,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
@@ -179,9 +184,11 @@ class _GraficoCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.end,
+            alignment: WrapAlignment.spaceBetween,
+            spacing: 16,
+            runSpacing: 10,
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -301,7 +308,8 @@ class _LineaPainter extends CustomPainter {
     final posiciones = <Offset>[];
     for (var i = 0; i < puntos.length; i++) {
       final x = margen + i * (size.width - margen * 2) / (puntos.length - 1);
-      final y = margen + (maximo - puntos[i]) / rango * (size.height - margen * 2);
+      final y =
+          margen + (maximo - puntos[i]) / rango * (size.height - margen * 2);
       posiciones.add(Offset(x, y));
     }
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+
 import 'bienestar_hoy_page.dart';
 import 'hidratacion_page.dart';
+import '../widgets/golf_identity.dart';
 
 const _green = Color(0xFF14573A);
 const _mint = Color(0xFFCFE3D4);
@@ -13,23 +15,17 @@ class BienestarPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Bienestar',
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Cómo estás hoy y cuánta agua te falta.',
-            style: TextStyle(fontSize: 15, color: scheme.onSurfaceVariant),
+          const GolfHeading(
+            title: 'Recarga para el green',
+            subtitle: 'Descansa, hidrátate y vuelve a disfrutar.',
+            icon: Icons.spa_rounded,
+            hole: '04 / BIENESTAR',
           ),
           const SizedBox(height: 16),
           const _ResumenCard(),
@@ -42,7 +38,7 @@ class BienestarPage extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           _Acceso(
-            icono: Icons.favorite_border,
+            icono: Icons.spa_outlined,
             titulo: 'Bienestar de hoy',
             detalle: 'Sueño, fatiga, dolor y agua · 1 min',
             destino: const BienestarHoyPage(),
@@ -70,16 +66,33 @@ class _ResumenCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: _green,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [_green, Color(0xFF287253)],
+        ),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'RESUMEN DE HOY',
-            style: TextStyle(fontSize: 12, letterSpacing: 1, color: _mint),
+          const Row(
+            children: [
+              Icon(Icons.water_drop_rounded, color: _mint, size: 18),
+              SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  'TU PAUSA ENTRE HOYOS',
+                  style: TextStyle(
+                    fontSize: 11,
+                    letterSpacing: 1,
+                    color: _mint,
+                  ),
+                ),
+              ),
+            ],
           ),
+          const SizedBox(height: 10),
           const Text(
             'Faltan 1,4 L de agua',
             style: TextStyle(
@@ -110,8 +123,10 @@ class _ResumenCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          const Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            spacing: 16,
+            runSpacing: 6,
             children: [
               Text('Agua de hoy', style: TextStyle(fontSize: 12, color: _mint)),
               Text(
@@ -127,11 +142,18 @@ class _ResumenCard extends StatelessWidget {
           const SizedBox(height: 8),
           ClipRRect(
             borderRadius: BorderRadius.circular(999),
-            child: const LinearProgressIndicator(
-              value: 1.2 / 2.6,
-              minHeight: 10,
-              color: Color(0xFF7DB8E0),
-              backgroundColor: Colors.white24,
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: 1.2 / 2.6),
+              duration: Duration(
+                milliseconds: MediaQuery.disableAnimationsOf(context) ? 0 : 800,
+              ),
+              curve: Curves.easeOutCubic,
+              builder: (_, value, _) => LinearProgressIndicator(
+                value: value,
+                minHeight: 10,
+                color: Color(0xFFD6ED8A),
+                backgroundColor: Colors.white24,
+              ),
             ),
           ),
         ],
@@ -192,10 +214,8 @@ class _Acceso extends StatelessWidget {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => destino),
-        ),
+        onTap: () =>
+            Navigator.push(context, MaterialPageRoute(builder: (_) => destino)),
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Row(

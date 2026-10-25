@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'screens/golfy_main.dart';
 import 'theme.dart';
 
@@ -17,6 +18,7 @@ class MyApp extends StatelessWidget {
       builder: (context, mode, _) {
         return MaterialApp(
           title: 'Golfy',
+          debugShowCheckedModeBanner: false,
           theme: lightTheme,
           darkTheme: darkTheme,
           themeMode: mode,
@@ -25,4 +27,4 @@ class MyApp extends StatelessWidget {
       },
     );
   }
-}
+}

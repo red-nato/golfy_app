@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+
 import '../perfil.dart';
+import '../widgets/golf_identity.dart';
+import '../theme.dart';
 import 'bitacora_page.dart';
 import 'chequeo_page.dart';
 import 'hidratacion_page.dart';
@@ -30,10 +33,12 @@ class InicioPage extends StatelessWidget {
         children: [
           _Header(onPerfil: onPerfil),
           const SizedBox(height: 18),
+          const _CourseWelcome(),
+          const SizedBox(height: 18),
           const _StatusCard(),
           const SizedBox(height: 18),
           Text(
-            'Registro de hoy',
+            'Tu rutina fuera del green',
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
             ),
@@ -53,7 +58,7 @@ class InicioPage extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: _ActionCard(
-                  icon: Icons.fact_check_outlined,
+                  icon: Icons.sports_golf_rounded,
                   label: 'Chequeo post-ronda',
                   onTap: () => _abrir(context, const ChequeoPage()),
                 ),
@@ -90,9 +95,12 @@ class _Header extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Jueves 8 de octubre',
+                    'UN BUEN DÍA PARA JUGAR',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: scheme.onSurfaceVariant,
+                      fontSize: 10,
+                      letterSpacing: 1.5,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                   Text(
@@ -133,62 +141,154 @@ class _Header extends StatelessWidget {
   }
 }
 
+class _CourseWelcome extends StatelessWidget {
+  const _CourseWelcome();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF103D2B), Color(0xFF1C563B)],
+        ),
+        borderRadius: BorderRadius.circular(28),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          const copy = Padding(
+            padding: EdgeInsets.fromLTRB(24, 24, 20, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.sports_golf_rounded, size: 17, color: golfLime),
+                    SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        'CADA DÍA, UN MEJOR JUEGO',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.2,
+                          color: golfLime,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 14),
+                Text(
+                  'Tu mejor ronda\nempieza contigo.',
+                  style: TextStyle(
+                    fontSize: 32,
+                    height: 1.08,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -1,
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(height: 12),
+                Text(
+                  'Cuida tu cuerpo. Encuentra tu ritmo.\nDisfruta el recorrido.',
+                  style: TextStyle(color: _mint, height: 1.5, fontSize: 14),
+                ),
+                SizedBox(height: 16),
+              ],
+            ),
+          );
+          if (constraints.maxWidth >= 580) {
+            return const Row(
+              children: [
+                Expanded(child: copy),
+                Expanded(child: SizedBox(height: 230, child: FairwayScene())),
+              ],
+            );
+          }
+          return const Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              copy,
+              SizedBox(height: 158, child: FairwayScene()),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
 class _StatusCard extends StatelessWidget {
   const _StatusCard();
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final dark = scheme.brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: _green,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF26352B)
+            : const Color(0xFFEAF0DF),
         borderRadius: BorderRadius.circular(24),
       ),
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              _Semaforo(),
-              SizedBox(width: 14),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'ESTADO HOY',
-                    style: TextStyle(
-                      fontSize: 12,
-                      letterSpacing: 1,
-                      color: _mint,
+              Icon(Icons.flag_rounded, color: scheme.primary, size: 28),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'ESTADO HOY',
+                      style: TextStyle(
+                        fontSize: 12,
+                        letterSpacing: 1,
+                        color: scheme.onSurfaceVariant,
+                      ),
                     ),
-                  ),
-                  Text(
-                    'Atención',
-                    style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      height: 1.1,
+                    Text(
+                      'Atención',
+                      style: TextStyle(
+                        fontSize: 25,
+                        fontWeight: FontWeight.w700,
+                        color: dark
+                            ? const Color(0xFFF4CB6C)
+                            : const Color(0xFF93600B),
+                        height: 1.1,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const _Semaforo(),
             ],
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Text(
             'Tu carga de esta semana va 38 % sobre tu promedio. '
             'Baja la intensidad en el rango antes de la ronda del sábado.',
             style: TextStyle(
               fontSize: 15,
               height: 1.45,
-              color: Color(0xFFEAF3EC),
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
-          SizedBox(height: 16),
-          Divider(color: Colors.white24, height: 1),
-          SizedBox(height: 14),
+          const SizedBox(height: 16),
+          Divider(
+            color: Theme.of(context).colorScheme.outlineVariant,
+            height: 1,
+          ),
+          const SizedBox(height: 14),
           Row(
             children: [
               Expanded(child: _Stat('Carga semanal', '1.310 UA')),
@@ -207,8 +307,8 @@ class _Semaforo extends StatelessWidget {
 
   Widget _dot(Color color, {bool active = false}) {
     return Container(
-      width: 28,
-      height: 28,
+      width: 12,
+      height: 12,
       margin: const EdgeInsets.symmetric(horizontal: 4),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
@@ -225,7 +325,7 @@ class _Semaforo extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.12),
+        color: Colors.black.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
@@ -251,14 +351,20 @@ class _Stat extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, color: _mint)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
         const SizedBox(height: 2),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 17,
             fontWeight: FontWeight.w600,
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
       ],
@@ -274,7 +380,7 @@ class _PrimaryAction extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
 
     return Material(
-      color: scheme.inverseSurface,
+      color: scheme.primary,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -285,15 +391,19 @@ class _PrimaryAction extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Registrar cómo estoy · 1 min',
-                style: TextStyle(
-                  color: scheme.onInverseSurface,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+              Icon(Icons.spa_rounded, color: scheme.onPrimary, size: 22),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Registrar cómo estoy · 1 min',
+                  style: TextStyle(
+                    color: scheme.onPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-              Icon(Icons.arrow_forward, color: scheme.onInverseSurface),
+              Icon(Icons.arrow_forward_rounded, color: scheme.onPrimary),
             ],
           ),
         ),
@@ -336,7 +446,7 @@ class _ActionCard extends StatelessWidget {
                 backgroundColor: scheme.primaryContainer,
                 child: Icon(icon, size: 20, color: scheme.onPrimaryContainer),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 14),
               Text(
                 label,
                 style: const TextStyle(
@@ -344,6 +454,8 @@ class _ActionCard extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
+              const SizedBox(height: 6),
+              Icon(Icons.north_east_rounded, size: 16, color: scheme.primary),
             ],
           ),
         ),
@@ -371,6 +483,12 @@ class _NextRoundCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
+              Icon(
+                Icons.golf_course_rounded,
+                color: isDark ? _mint : _green,
+                size: 30,
+              ),
+              const SizedBox(width: 12),
               const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -390,11 +508,10 @@ class _NextRoundCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Text(
-                'Plan de agua',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+              Tooltip(
+                message: 'Ver plan de agua',
+                child: Icon(
+                  Icons.water_drop_outlined,
                   color: isDark ? _mint : _green,
                 ),
               ),
@@ -404,4 +521,4 @@ class _NextRoundCard extends StatelessWidget {
       ),
     );
   }
-}
+}
