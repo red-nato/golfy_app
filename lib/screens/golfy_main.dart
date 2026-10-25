@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
+import '../pages/bienestar_page.dart';
+import '../pages/carga_page.dart';
 import '../pages/inicio_page.dart';
-import '../pages/placeholder_page.dart';
+import '../pages/mediciones_page.dart';
+import '../pages/perfil_page.dart';
 import '../theme.dart';
 
 class GolfyMain extends StatefulWidget {
@@ -15,12 +18,13 @@ class _GolfyMainState extends State<GolfyMain> {
   int _selectedIndex = 0;
 
   // Una pantalla por pestaña, en el MISMO orden que los items de abajo.
-  final _pages = const [
-    InicioPage(),
-    PlaceholderPage('Mediciones'),
-    PlaceholderPage('Carga'),
-    PlaceholderPage('Bienestar'),
-    PlaceholderPage('Perfil'),
+  // Inicio recibe una función para saltar a la pestaña Perfil (la última).
+  late final List<Widget> _pages = [
+    InicioPage(onPerfil: () => setState(() => _selectedIndex = 4)),
+    const MedicionesPage(),
+    const CargaPage(),
+    const BienestarPage(),
+    const PerfilPage(),
   ];
 
   final _items = [
@@ -68,7 +72,9 @@ class _GolfyMainState extends State<GolfyMain> {
           ),
         ],
       ),
-      body: _pages[_selectedIndex],
+      // IndexedStack mantiene viva cada pestaña: no pierdes lo que registraste
+      // en Carga ni lo que editaste en Perfil al cambiar de pestaña.
+      body: IndexedStack(index: _selectedIndex, children: _pages),
       bottomNavigationBar: SalomonBottomBar(
         currentIndex: _selectedIndex,
         unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -77,4 +83,4 @@ class _GolfyMainState extends State<GolfyMain> {
       ),
     );
   }
-}
+}

@@ -16,4 +16,4 @@ final darkTheme = ThemeData(
     brightness: Brightness.dark,
   ),
   scaffoldBackgroundColor: const Color(0xFF1A1A1A),
-);
+);

@@ -12,4 +12,4 @@ class PlaceholderPage extends StatelessWidget {
       child: Text(title, style: Theme.of(context).textTheme.headlineSmall),
     );
   }
-}
+}

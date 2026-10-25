@@ -1,10 +1,23 @@
 import 'package:flutter/material.dart';
+import '../perfil.dart';
+import 'bitacora_page.dart';
+import 'chequeo_page.dart';
+import 'hidratacion_page.dart';
+import 'social_page.dart';
 
 const _green = Color(0xFF14573A);
 const _mint = Color(0xFFCFE3D4);
 
+// Abre otra pantalla encima de Inicio (la flecha de volver viene sola).
+void _abrir(BuildContext context, Widget pantalla) {
+  Navigator.push(context, MaterialPageRoute(builder: (_) => pantalla));
+}
+
 class InicioPage extends StatelessWidget {
-  const InicioPage({super.key});
+  const InicioPage({super.key, required this.onPerfil});
+
+  // Cambia a la pestaña Perfil (la define GolfyMain).
+  final VoidCallback onPerfil;
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +28,7 @@ class InicioPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _Header(),
+          _Header(onPerfil: onPerfil),
           const SizedBox(height: 18),
           const _StatusCard(),
           const SizedBox(height: 18),
@@ -28,34 +41,27 @@ class InicioPage extends StatelessWidget {
           const SizedBox(height: 10),
           const _PrimaryAction(),
           const SizedBox(height: 10),
-          const Row(
+          Row(
             children: [
               Expanded(
                 child: _ActionCard(
-                  icon: Icons.monitor_heart,
-                  label: 'Registrar sesión',
+                  icon: Icons.groups_outlined,
+                  label: 'Mi grupo',
+                  onTap: () => _abrir(context, const SocialPage()),
                 ),
               ),
-              SizedBox(width: 10),
+              const SizedBox(width: 10),
               Expanded(
                 child: _ActionCard(
                   icon: Icons.fact_check_outlined,
                   label: 'Chequeo post-ronda',
+                  onTap: () => _abrir(context, const ChequeoPage()),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 18),
           const _NextRoundCard(),
-          const SizedBox(height: 8),
-          Center(
-            child: TextButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.chevron_right),
-              iconAlignment: IconAlignment.end,
-              label: const Text('Cambiar a vista del entrenador'),
-            ),
-          ),
         ],
       ),
     );
@@ -63,45 +69,66 @@ class InicioPage extends StatelessWidget {
 }
 
 class _Header extends StatelessWidget {
-  const _Header();
+  const _Header({required this.onPerfil});
+
+  final VoidCallback onPerfil;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    // Se actualiza solo cuando editas el perfil.
+    return ValueListenableBuilder<Perfil>(
+      valueListenable: perfilNotifier,
+      builder: (context, perfil, _) {
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'Jueves 8 de octubre',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: scheme.onSurfaceVariant,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Jueves 8 de octubre',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                  Text(
+                    'Hola, ${perfil.primerNombre}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ),
             ),
-            Text(
-              'Hola, Matías',
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.w700,
+            const SizedBox(width: 12),
+            // Al tocar el avatar se abre la pestaña Perfil.
+            Tooltip(
+              message: 'Ir a mi perfil',
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: onPerfil,
+                child: CircleAvatar(
+                  radius: 24,
+                  backgroundColor: scheme.primaryContainer,
+                  child: Text(
+                    perfil.iniciales,
+                    style: TextStyle(
+                      color: scheme.onPrimaryContainer,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
               ),
             ),
           ],
-        ),
-        CircleAvatar(
-          radius: 24,
-          backgroundColor: scheme.primaryContainer,
-          child: Text(
-            'MR',
-            style: TextStyle(
-              color: scheme.onPrimaryContainer,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 }
@@ -251,7 +278,7 @@ class _PrimaryAction extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () {}, // luego: navegar a Bienestar
+        onTap: () => _abrir(context, const BitacoraPage()),
         child: Container(
           constraints: const BoxConstraints(minHeight: 52),
           padding: const EdgeInsets.symmetric(horizontal: 18),
@@ -276,10 +303,15 @@ class _PrimaryAction extends StatelessWidget {
 }
 
 class _ActionCard extends StatelessWidget {
-  const _ActionCard({required this.icon, required this.label});
+  const _ActionCard({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   final IconData icon;
   final String label;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -293,7 +325,7 @@ class _ActionCard extends StatelessWidget {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () {},
+        onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Column(
@@ -334,7 +366,7 @@ class _NextRoundCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () {},
+        onTap: () => _abrir(context, const HidratacionPage()),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
@@ -372,4 +404,4 @@ class _NextRoundCard extends StatelessWidget {
       ),
     );
   }
-}
+}
