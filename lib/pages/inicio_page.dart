@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../perfil.dart';
 import '../widgets/golf_identity.dart';
+import '../widgets/clima_card.dart';
 import '../theme.dart';
 import 'bitacora_page.dart';
 import 'chequeo_page.dart';
@@ -67,6 +68,8 @@ class InicioPage extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           const _NextRoundCard(),
+          const SizedBox(height: 14),
+          const ClimaCard(resumen: true),
         ],
       ),
     );
@@ -499,7 +502,7 @@ class _NextRoundCard extends StatelessWidget {
                     ),
                     SizedBox(height: 2),
                     Text(
-                      '18 hoyos · 26 °C · UV alto',
+                      '18 hoyos · ver plan de agua',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,

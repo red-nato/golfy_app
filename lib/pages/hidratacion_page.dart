@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/clima_card.dart';
+
 const _hoyos = [3, 6, 9, 12, 15, 18];
 
 class HidratacionPage extends StatefulWidget {
@@ -20,8 +22,6 @@ class _HidratacionPageState extends State<HidratacionPage> {
 
     // Colores propios de esta pantalla (azul agua y arena), con versión oscura.
     final azul = isDark ? const Color(0xFF7DB8E0) : const Color(0xFF1F628F);
-    final arena = isDark ? const Color(0xFF3A3524) : const Color(0xFFEFE8D2);
-    final textoArena = isDark ? Colors.white70 : const Color(0xFF5A4F2E);
 
     return Scaffold(
       appBar: AppBar(),
@@ -38,31 +38,11 @@ class _HidratacionPageState extends State<HidratacionPage> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Sábado · ronda de 18 hoyos',
+              'Plan de ejemplo · 18 hoyos',
               style: TextStyle(fontSize: 15, color: scheme.onSurfaceVariant),
             ),
             const SizedBox(height: 14),
-            // Clima
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(
-                color: arena,
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _Clima('Temperatura', '26 °C', textoArena),
-                  ),
-                  Expanded(
-                    child: _Clima('Humedad', '48 %', textoArena),
-                  ),
-                  Expanded(
-                    child: _Clima('Índice UV', '8 · alto', textoArena),
-                  ),
-                ],
-              ),
-            ),
+            const ClimaCard(),
             const SizedBox(height: 14),
             // Cuánta agua llevar y cuándo tomarla
             Container(
@@ -77,7 +57,7 @@ class _HidratacionPageState extends State<HidratacionPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Lleva en el carro',
+                    'Agua del plan de ejemplo',
                     style: TextStyle(
                       fontSize: 14,
                       color: scheme.onSurfaceVariant,
@@ -94,7 +74,8 @@ class _HidratacionPageState extends State<HidratacionPage> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Para unas 4 h 30 min de juego con este calor.',
+                    'Ejemplo para 4 h 30 min de juego. '
+                    'Esta cantidad no se calcula a partir del clima.',
                     style: TextStyle(
                       fontSize: 14,
                       color: scheme.onSurfaceVariant,
@@ -178,13 +159,15 @@ class _HidratacionPageState extends State<HidratacionPage> {
             ),
             const SizedBox(height: 14),
             Text(
-              'Clima de Open-Meteo. Recomendación referencial, ajústala según '
-              'cómo te sientas.',
+              'El clima corresponde a hoy en Santiago. El plan de agua es '
+              'referencial y no cambia al actualizar el clima.',
               style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
             ),
             const SizedBox(height: 20),
             Material(
-              color: _recordatorios ? scheme.primaryContainer : scheme.inverseSurface,
+              color: _recordatorios
+                  ? scheme.primaryContainer
+                  : scheme.inverseSurface,
               borderRadius: BorderRadius.circular(16),
               child: InkWell(
                 borderRadius: BorderRadius.circular(16),
@@ -210,28 +193,6 @@ class _HidratacionPageState extends State<HidratacionPage> {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _Clima extends StatelessWidget {
-  const _Clima(this.label, this.valor, this.colorLabel);
-
-  final String label;
-  final String valor;
-  final Color colorLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: TextStyle(fontSize: 12, color: colorLabel)),
-        Text(
-          valor,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-      ],
     );
   }
 }

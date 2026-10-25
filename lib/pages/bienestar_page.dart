@@ -47,7 +47,7 @@ class BienestarPage extends StatelessWidget {
           _Acceso(
             icono: Icons.water_drop_outlined,
             titulo: 'Plan de hidratación',
-            detalle: 'Sábado · lleva 2,6 L para la ronda',
+            detalle: 'Plan de ejemplo · clima de hoy en Santiago',
             destino: const HidratacionPage(),
           ),
         ],
