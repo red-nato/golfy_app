@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+
 import '../perfil.dart';
+import '../widgets/golf_identity.dart';
 
 const _green = Color(0xFF14573A);
 
@@ -35,11 +37,11 @@ class _PerfilPageState extends State<PerfilPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Perfil',
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+              const GolfHeading(
+                title: 'Tu ficha de jugador',
+                subtitle: 'Tu identidad, dentro y fuera del campo.',
+                icon: Icons.golf_course_rounded,
+                hole: '05 / PERFIL',
               ),
               const SizedBox(height: 16),
               _JugadorCard(perfil: p, onEditar: () => _editar(p)),
@@ -47,7 +49,11 @@ class _PerfilPageState extends State<PerfilPage> {
               Row(
                 children: [
                   Expanded(
-                    child: _Dato(label: 'Peso', valor: coma(p.peso), unidad: 'kg'),
+                    child: _Dato(
+                      label: 'Peso',
+                      valor: coma(p.peso),
+                      unidad: 'kg',
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -62,7 +68,9 @@ class _PerfilPageState extends State<PerfilPage> {
               const SizedBox(height: 10),
               Row(
                 children: [
-                  Expanded(child: _Dato(label: 'IMC', valor: coma(p.imc))),
+                  Expanded(
+                    child: _Dato(label: 'IMC', valor: coma(p.imc)),
+                  ),
                   const SizedBox(width: 10),
                   const Expanded(
                     child: _Dato(
@@ -85,7 +93,10 @@ class _PerfilPageState extends State<PerfilPage> {
                   children: [
                     _Fila('Hándicap', coma(p.handicap)),
                     Divider(height: 1, color: scheme.outlineVariant),
-                    _Fila('Mano dominante', p.manoDerecha ? 'Derecha' : 'Izquierda'),
+                    _Fila(
+                      'Mano dominante',
+                      p.manoDerecha ? 'Derecha' : 'Izquierda',
+                    ),
                     Divider(height: 1, color: scheme.outlineVariant),
                     const _Fila('Práctica', 'Mar · Jue · Sáb'),
                     Divider(height: 1, color: scheme.outlineVariant),
@@ -94,9 +105,11 @@ class _PerfilPageState extends State<PerfilPage> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'Recordatorio diario · 20:00',
-                            style: TextStyle(fontSize: 15),
+                          const Expanded(
+                            child: Text(
+                              'Recordatorio diario · 20:00',
+                              style: TextStyle(fontSize: 15),
+                            ),
                           ),
                           Switch(
                             value: _recordatorio,
@@ -147,15 +160,23 @@ class _JugadorCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 32,
-            backgroundColor: scheme.primaryContainer,
-            child: Text(
-              perfil.iniciales,
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w600,
-                color: scheme.onPrimaryContainer,
+          Badge(
+            backgroundColor: scheme.primary,
+            label: const Icon(
+              Icons.sports_golf_rounded,
+              size: 13,
+              color: Colors.white,
+            ),
+            child: CircleAvatar(
+              radius: 32,
+              backgroundColor: scheme.primaryContainer,
+              child: Text(
+                perfil.iniciales,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w600,
+                  color: scheme.onPrimaryContainer,
+                ),
               ),
             ),
           ),
@@ -261,9 +282,13 @@ class _EditarPerfilDialogState extends State<_EditarPerfilDialog> {
           : null;
     });
 
-    final hayError = [_eNombre, _eEdad, _ePeso, _eEstatura, _eHandicap].any(
-      (e) => e != null,
-    );
+    final hayError = [
+      _eNombre,
+      _eEdad,
+      _ePeso,
+      _eEstatura,
+      _eHandicap,
+    ].any((e) => e != null);
     if (hayError) return;
 
     Navigator.pop(
@@ -345,8 +370,8 @@ class _EditarPerfilDialogState extends State<_EditarPerfilDialog> {
                 child: SegmentedButton<bool>(
                   showSelectedIcon: false,
                   segments: const [
-                    ButtonSegment(value: true, label: Text('Derecha')),
                     ButtonSegment(value: false, label: Text('Izquierda')),
+                    ButtonSegment(value: true, label: Text('Derecha')),
                   ],
                   selected: {_derecha},
                   onSelectionChanged: (s) => setState(() => _derecha = s.first),
@@ -415,7 +440,10 @@ class _Dato extends StatelessWidget {
                       ),
                   ],
                 ),
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
@@ -438,10 +466,14 @@ class _Fila extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontSize: 15)),
-          Text(
-            valor,
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+          Expanded(child: Text(label, style: const TextStyle(fontSize: 15))),
+          const SizedBox(width: 12),
+          Flexible(
+            child: Text(
+              valor,
+              textAlign: TextAlign.end,
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+            ),
           ),
         ],
       ),

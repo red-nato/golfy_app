@@ -2,6 +2,8 @@ import 'dart:math' show max;
 
 import 'package:flutter/material.dart';
 
+import '../widgets/golf_identity.dart';
+
 const _green = Color(0xFF14573A);
 const _mint = Color(0xFFCFE3D4);
 
@@ -109,9 +111,8 @@ class _CargaPageState extends State<CargaPage> {
         _semana[dia] = null;
         if (_editando == dia) _editando = null;
       });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Sesión eliminada')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Sesión eliminada')));
     } else if (accion == 'modificar') {
       setState(() {
         _tipo = sesion.tipo;
@@ -125,7 +126,6 @@ class _CargaPageState extends State<CargaPage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final sesionHoy = _semana[_hoy];
     final registradaHoy = sesionHoy != null && _editando == null;
     // La barra "fantasma" de hoy solo se ve mientras abres el formulario.
@@ -138,11 +138,11 @@ class _CargaPageState extends State<CargaPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Carga',
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+          const GolfHeading(
+            title: 'Encuentra tu ritmo',
+            subtitle: 'Del rango al green, cada sesión cuenta.',
+            icon: Icons.sports_golf_rounded,
+            hole: '03 / CARGA',
           ),
           const SizedBox(height: 14),
           _SemanaCard(
@@ -155,7 +155,7 @@ class _CargaPageState extends State<CargaPage> {
           _Alerta(total: _total),
           const SizedBox(height: 14),
           if (registradaHoy)
-            _TarjetaRegistrada(sesion: sesionHoy!)
+            _TarjetaRegistrada(sesion: sesionHoy)
           else
             _tarjetaFormulario(context),
         ],
@@ -390,10 +390,11 @@ class _SemanaCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            alignment: WrapAlignment.spaceBetween,
+            spacing: 16,
+            runSpacing: 8,
             children: [
               Text(
                 'Esta semana',
@@ -413,7 +414,10 @@ class _SemanaCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
@@ -520,7 +524,9 @@ class _Alerta extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
-            sobrecarga ? Icons.warning_amber_rounded : Icons.check_circle_outline,
+            sobrecarga
+                ? Icons.warning_amber_rounded
+                : Icons.check_circle_outline,
             color: sobrecarga ? texto : scheme.onSurfaceVariant,
           ),
           const SizedBox(width: 12),
@@ -534,7 +540,8 @@ class _Alerta extends StatelessWidget {
                           style: TextStyle(fontWeight: FontWeight.w700),
                         ),
                         TextSpan(
-                          text: 'Vas $pct % sobre tu promedio de 4 semanas. '
+                          text:
+                              'Vas $pct % sobre tu promedio de 4 semanas. '
                               'Considera una sesión liviana hoy.',
                         ),
                       ],
