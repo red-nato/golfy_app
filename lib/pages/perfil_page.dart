@@ -345,8 +345,8 @@ class _EditarPerfilDialogState extends State<_EditarPerfilDialog> {
                 child: SegmentedButton<bool>(
                   showSelectedIcon: false,
                   segments: const [
-                    ButtonSegment(value: true, label: Text('Derecha')),
                     ButtonSegment(value: false, label: Text('Izquierda')),
+                    ButtonSegment(value: true, label: Text('Derecha')),
                   ],
                   selected: {_derecha},
                   onSelectionChanged: (s) => setState(() => _derecha = s.first),
