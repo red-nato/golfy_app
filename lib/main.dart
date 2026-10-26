@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
+import 'providers/auth_provider.dart';
 import 'providers/clima_provider.dart';
 import 'screens/golfy_main.dart';
 import 'theme.dart';
@@ -17,8 +17,12 @@ Future<void> main() async {
   );
 
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => ClimaProvider(),
+    // Los providers envuelven el MaterialApp: los ven todas las pantallas.
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ClimaProvider()),
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+      ],
       child: const MyApp(),
     ),
   );
