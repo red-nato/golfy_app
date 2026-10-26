@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../providers/auth_provider.dart';
 import '../widgets/golf_identity.dart';
 import '../pages/bienestar_page.dart';
 import '../pages/carga_page.dart';
@@ -28,6 +30,29 @@ class _GolfyMainState extends State<GolfyMain> {
     const PerfilPage(),
   ];
 
+  // Pregunta antes de cerrar la sesión. Al salir, el AuthGate vuelve solo
+  // al login: no hace falta navegar.
+  Future<void> _confirmarSalida() async {
+    final salir = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('¿Cerrar sesión?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Salir'),
+          ),
+        ],
+      ),
+    );
+    if (salir == true && mounted) {
+      await context.read<AuthProvider>().salir();
+    }
+  }
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -103,6 +128,11 @@ class _GolfyMainState extends State<GolfyMain> {
                         : ThemeMode.dark;
                   },
                 ),
+                IconButton(
+                  tooltip: 'Cerrar sesión',
+                  icon: const Icon(Icons.logout_rounded),
+                  onPressed: _confirmarSalida,
+                ),               
               ],
             ),
             // IndexedStack mantiene viva cada pestaña: no pierdes lo que registraste

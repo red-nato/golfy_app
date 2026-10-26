@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'providers/auth_provider.dart';
 import 'providers/clima_provider.dart';
-import 'screens/golfy_main.dart';
+import 'screens/auth_gate.dart';
 import 'theme.dart';
 
 Future<void> main() async {
@@ -29,7 +29,10 @@ Future<void> main() async {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  // `home` se puede cambiar en las pruebas, que no se conectan a Supabase.
+  const MyApp({super.key, this.home = const AuthGate()});
+
+  final Widget home;
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +46,7 @@ class MyApp extends StatelessWidget {
           theme: lightTheme,
           darkTheme: darkTheme,
           themeMode: mode,
-          home: const GolfyMain(),
+          home: home,
         );
       },
     );
