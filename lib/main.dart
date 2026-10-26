@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'providers/auth_provider.dart';
 import 'providers/clima_provider.dart';
+import 'providers/mediciones_provider.dart';
 import 'screens/auth_gate.dart';
 import 'theme.dart';
 
@@ -22,6 +23,7 @@ Future<void> main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => ClimaProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => MedicionesProvider()),
       ],
       child: const MyApp(),
     ),
