@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 import '../models/medicion.dart';
 import '../providers/mediciones_provider.dart';
 import '../widgets/golf_identity.dart';
+import '../widgets/insignia_medicion.dart';
 import 'nueva_medicion_page.dart';
+import 'detalle_medicion_page.dart';
 
 const _green = Color(0xFF14573A);
 
@@ -128,7 +130,7 @@ class _MedicionesPageState extends State<MedicionesPage> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Toca una medición para editarla.',
+              'Toca una medición para ver su detalle.',
               style: TextStyle(
                 fontSize: 13,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -404,11 +406,11 @@ class _Historial extends StatelessWidget {
 
   final _Serie serie;
 
-  void _editar(BuildContext context, Medicion m) {
-    // La medición viaja a la pantalla del formulario por su constructor.
+  void _verDetalle(BuildContext context, Medicion m) {
+    // La medición viaja a la pantalla de detalle por su constructor.
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => NuevaMedicionPage(medicion: m)),
+      MaterialPageRoute(builder: (_) => DetalleMedicionPage(medicion: m)),
     );
   }
 
@@ -461,13 +463,22 @@ class _Historial extends StatelessWidget {
             for (var i = 0; i < filas.length; i++) ...[
               if (i > 0) Divider(height: 1, color: scheme.outlineVariant),
               InkWell(
-                onTap: () => _editar(context, filas[i]),
+                onTap: () => _verDetalle(context, filas[i]),
                 child: Padding(
-                  padding: const EdgeInsets.only(left: 16, right: 4),
+                  padding: const EdgeInsets.only(left: 12, right: 4),
                   child: SizedBox(
-                    height: 52,
+                    height: 56,
                     child: Row(
                       children: [
+                        SizedBox(
+                          width: 36,
+                          height: 36,
+                          child: Hero(
+                            tag: heroMedicion(filas[i]),
+                            child: const InsigniaMedicion(),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Text(
                             filas[i].fechaCorta,
