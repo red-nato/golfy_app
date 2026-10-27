@@ -6,11 +6,20 @@ import 'package:golfy_app/providers/clima_provider.dart';
 import 'package:golfy_app/screens/golfy_main.dart';
 import 'package:golfy_app/theme.dart';
 import 'package:golfy_app/widgets/golf_identity.dart';
+import 'package:golfy_app/providers/mediciones_provider.dart';
 
 import 'fixtures/clima_fixture.dart';
+import 'fixtures/mediciones_fixture.dart';
 
-Widget _app({ClimaServiceFalso? servicio}) => ChangeNotifierProvider(
-  create: (_) => ClimaProvider(servicio: servicio ?? ClimaServiceFalso()),
+Widget _app({ClimaServiceFalso? servicio}) => MultiProvider(
+  providers: [
+    ChangeNotifierProvider(
+      create: (_) => ClimaProvider(servicio: servicio ?? ClimaServiceFalso()),
+    ),
+    ChangeNotifierProvider(
+      create: (_) => MedicionesProvider(servicio: MedicionesServiceFalso()),
+    ),
+  ],
   // Sin Supabase: las pruebas entran directo a la app.
   child: const MyApp(home: GolfyMain()),
 );
