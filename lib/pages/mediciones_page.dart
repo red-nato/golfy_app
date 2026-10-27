@@ -1,64 +1,61 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-import 'nueva_medicion_page.dart';
+import '../models/medicion.dart';
+import '../providers/mediciones_provider.dart';
 import '../widgets/golf_identity.dart';
+import '../widgets/insignia_medicion.dart';
+import 'nueva_medicion_page.dart';
+import 'detalle_medicion_page.dart';
 
 const _green = Color(0xFF14573A);
 
-// Datos de cada tipo de medición (por ahora fijos, luego vendrán de una base).
-class _Serie {
-  const _Serie({
-    required this.ultimo,
-    required this.unidad,
-    required this.cambio,
-    required this.puntos,
-    required this.historial,
-  });
+const _tipos = ['Peso', 'IMC', 'Pulso reposo'];
+const _unidades = ['kg', '', 'lpm'];
 
-  final String ultimo;
-  final String unidad;
-  final String cambio;
-  final List<double> puntos;
-  final List<List<String>> historial; // [fecha, valor]
+// El dato que muestra cada pestaña del selector. El pulso puede faltar.
+double? _valor(Medicion m, int tipo) {
+  if (tipo == 0) return m.peso;
+  if (tipo == 1) return m.imc;
+  return m.pulso?.toDouble();
 }
 
-const _tipos = ['Peso', 'IMC', 'Pulso reposo'];
+// Con coma decimal: el pulso sin decimales, el resto con uno.
+String _formato(double valor, int tipo) {
+  return valor.toStringAsFixed(tipo == 2 ? 0 : 1).replaceAll('.', ',');
+}
 
-const _series = [
-  _Serie(
-    ultimo: '78,4',
-    unidad: 'kg',
-    cambio: '−1,2 kg en 30 días',
-    puntos: [79.6, 79.3, 78.9, 78.7, 78.8, 78.6, 78.5, 78.4],
-    historial: [
-      ['8 oct', '78,4 kg'],
-      ['1 oct', '78,7 kg'],
-      ['24 sep', '79,0 kg'],
-    ],
-  ),
-  _Serie(
-    ultimo: '24,5',
-    unidad: '',
-    cambio: '−0,4 en 30 días',
-    puntos: [24.8, 24.7, 24.6, 24.6, 24.6, 24.5, 24.5, 24.5],
-    historial: [
-      ['8 oct', '24,5'],
-      ['1 oct', '24,6'],
-      ['24 sep', '24,7'],
-    ],
-  ),
-  _Serie(
-    ultimo: '58',
-    unidad: 'lpm',
-    cambio: '−2 lpm en 30 días',
-    puntos: [60, 60, 59, 59, 60, 58, 58, 58],
-    historial: [
-      ['8 oct', '58 lpm'],
-      ['1 oct', '59 lpm'],
-      ['24 sep', '59 lpm'],
-    ],
-  ),
-];
+// Las mediciones de un tipo (Peso, IMC o Pulso), listas para dibujar.
+class _Serie {
+  _Serie(this.tipo, List<Medicion> todas)
+    : registros = [
+        for (final m in todas)
+          if (_valor(m, tipo) != null) m,
+      ];
+
+  final int tipo;
+  final List<Medicion> registros; // de la más reciente a la más antigua
+
+  String get unidad => _unidades[tipo];
+  Medicion get ultima => registros.first;
+
+  String texto(Medicion m) {
+    final u = unidad.isEmpty ? '' : ' $unidad';
+    return '${_formato(_valor(m, tipo)!, tipo)}$u';
+  }
+
+  // Diferencia con la medición anterior, o null si hay una sola.
+  String? get cambio {
+    if (registros.length < 2) return null;
+    final dif = _valor(registros[0], tipo)! - _valor(registros[1], tipo)!;
+    final signo = dif > 0 ? '+' : (dif < 0 ? '−' : '±');
+    final u = unidad.isEmpty ? '' : ' $unidad';
+    return '$signo${_formato(dif.abs(), tipo)}$u vs. la anterior';
+  }
+
+  // Hasta 8 puntos para el gráfico, de la más antigua a la más reciente.
+  List<Medicion> get grafico => registros.take(8).toList().reversed.toList();
+}
 
 class MedicionesPage extends StatefulWidget {
   const MedicionesPage({super.key});
@@ -71,8 +68,19 @@ class _MedicionesPageState extends State<MedicionesPage> {
   int _tipo = 0;
 
   @override
+  void initState() {
+    super.initState();
+    // Pide las mediciones al aparecer la pantalla, después del primer frame:
+    // cargar() avisa con notifyListeners y no se puede hacer durante un build.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<MedicionesProvider>().cargar();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final serie = _series[_tipo];
+    final provider = context.watch<MedicionesProvider>();
+    final serie = _Serie(_tipo, provider.mediciones);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
@@ -91,15 +99,46 @@ class _MedicionesPageState extends State<MedicionesPage> {
             onChanged: (i) => setState(() => _tipo = i),
           ),
           const SizedBox(height: 16),
-          _GraficoCard(serie: serie),
-          const SizedBox(height: 18),
-          Text(
-            'Historial',
-            style: Theme.of(context).textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 8),
-          _Historial(filas: serie.historial),
+          if (provider.cargando && provider.mediciones.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 48),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (provider.error != null)
+            _Aviso(
+              icono: Icons.cloud_off_rounded,
+              texto: provider.error!,
+              accion: 'Reintentar',
+              onAccion: () => context.read<MedicionesProvider>().cargar(),
+            )
+          else if (serie.registros.isEmpty)
+            _Aviso(
+              icono: Icons.monitor_weight_outlined,
+              texto: provider.mediciones.isEmpty
+                  ? 'Aún no tienes mediciones. Registra la primera para '
+                        'empezar a ver tu evolución.'
+                  : 'Ninguna de tus mediciones tiene pulso registrado.',
+            )
+          else ...[
+            _GraficoCard(serie: serie),
+            const SizedBox(height: 18),
+            Text(
+              'Historial',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Toca una medición para ver su detalle.',
+              style: TextStyle(
+                fontSize: 13,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 8),
+            _Historial(serie: serie),
+          ],
           const SizedBox(height: 16),
           const _BotonNueva(),
         ],
@@ -172,6 +211,8 @@ class _GraficoCard extends StatelessWidget {
     final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     final unidad = serie.unidad.isEmpty ? '' : ' ${serie.unidad}';
+    final puntos = serie.grafico;
+    final cambio = serie.cambio;
 
     return Container(
       width: double.infinity,
@@ -194,7 +235,7 @@ class _GraficoCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Último registro · 8 oct',
+                    'Último registro · ${serie.ultima.fechaCorta}',
                     style: TextStyle(
                       fontSize: 13,
                       color: scheme.onSurfaceVariant,
@@ -202,7 +243,7 @@ class _GraficoCard extends StatelessWidget {
                   ),
                   Text.rich(
                     TextSpan(
-                      text: serie.ultimo,
+                      text: _formato(_valor(serie.ultima, serie.tipo)!, serie.tipo),
                       children: [
                         TextSpan(
                           text: unidad,
@@ -221,54 +262,69 @@ class _GraficoCard extends StatelessWidget {
                   ),
                 ],
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? _green.withValues(alpha: 0.5)
-                      : const Color(0xFFDCEBDD),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  serie.cambio,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : _green,
+              if (cambio != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? _green.withValues(alpha: 0.5)
+                        : const Color(0xFFDCEBDD),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    cambio,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white : _green,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
           const SizedBox(height: 12),
-          SizedBox(
-            height: 150,
-            width: double.infinity,
-            child: CustomPaint(
-              painter: _LineaPainter(
-                puntos: serie.puntos,
-                colorGrilla: scheme.outlineVariant,
-                colorFondoPunto: scheme.surfaceContainerLow,
+          // La línea necesita al menos dos puntos.
+          if (puntos.length < 2)
+            SizedBox(
+              height: 80,
+              child: Center(
+                child: Text(
+                  'Registra otra medición para ver la línea de tu evolución.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: scheme.onSurfaceVariant),
+                ),
+              ),
+            )
+          else ...[
+            SizedBox(
+              height: 150,
+              width: double.infinity,
+              child: CustomPaint(
+                painter: _LineaPainter(
+                  puntos: [for (final m in puntos) _valor(m, serie.tipo)!],
+                  colorGrilla: scheme.outlineVariant,
+                  colorFondoPunto: scheme.surfaceContainerLow,
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              for (final f in ['8 sep', '18 sep', '28 sep', '8 oct'])
-                Text(
-                  f,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: scheme.onSurfaceVariant,
+            const SizedBox(height: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                for (final m in [puntos.first, puntos.last])
+                  Text(
+                    m.fechaCorta,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: scheme.onSurfaceVariant,
+                    ),
                   ),
-                ),
-            ],
-          ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -346,41 +402,155 @@ class _LineaPainter extends CustomPainter {
 }
 
 class _Historial extends StatelessWidget {
-  const _Historial({required this.filas});
+  const _Historial({required this.serie});
 
-  final List<List<String>> filas;
+  final _Serie serie;
+
+  void _verDetalle(BuildContext context, Medicion m) {
+    // La medición viaja a la pantalla de detalle por su constructor.
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => DetalleMedicionPage(medicion: m)),
+    );
+  }
+
+  Future<void> _borrar(BuildContext context, Medicion m) async {
+    // Se toman antes del await: después, este context podría ya no existir.
+    final provider = context.read<MedicionesProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('¿Borrar esta medición?'),
+        content: Text('Se borrará la medición del ${m.fechaCorta}.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Borrar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmar != true) return;
+
+    final error = await provider.borrar(m.id!);
+    messenger.showSnackBar(
+      SnackBar(content: Text(error ?? 'Medición borrada')),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final filas = serie.registros;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Material(
+        type: MaterialType.transparency,
+        child: Column(
+          children: [
+            for (var i = 0; i < filas.length; i++) ...[
+              if (i > 0) Divider(height: 1, color: scheme.outlineVariant),
+              InkWell(
+                onTap: () => _verDetalle(context, filas[i]),
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 12, right: 4),
+                  child: SizedBox(
+                    height: 56,
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 36,
+                          height: 36,
+                          child: Hero(
+                            tag: heroMedicion(filas[i]),
+                            child: const InsigniaMedicion(),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            filas[i].fechaCorta,
+                            style: const TextStyle(fontSize: 15),
+                          ),
+                        ),
+                        Text(
+                          serie.texto(filas[i]),
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Borrar',
+                          icon: Icon(
+                            Icons.delete_outline_rounded,
+                            color: scheme.onSurfaceVariant,
+                          ),
+                          onPressed: () => _borrar(context, filas[i]),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Una tarjeta para los estados de error y vacío, con una acción opcional.
+class _Aviso extends StatelessWidget {
+  const _Aviso({
+    required this.icono,
+    required this.texto,
+    this.accion,
+    this.onAccion,
+  });
+
+  final IconData icono;
+  final String texto;
+  final String? accion;
+  final VoidCallback? onAccion;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: scheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: scheme.outlineVariant),
       ),
       child: Column(
         children: [
-          for (var i = 0; i < filas.length; i++) ...[
-            if (i > 0) Divider(height: 1, color: scheme.outlineVariant),
-            SizedBox(
-              height: 52,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(filas[i][0], style: const TextStyle(fontSize: 15)),
-                  Text(
-                    filas[i][1],
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          Icon(icono, size: 40, color: _green),
+          const SizedBox(height: 10),
+          Text(
+            texto,
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 15, color: scheme.onSurfaceVariant),
+          ),
+          if (accion != null) ...[
+            const SizedBox(height: 10),
+            TextButton(onPressed: onAccion, child: Text(accion!)),
           ],
         ],
       ),
