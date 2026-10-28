@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../providers/carga_provider.dart';
+import '../providers/auth_provider.dart';
 import '../providers/mediciones_provider.dart';
 import '../perfil.dart';
 import '../widgets/golf_identity.dart';
@@ -28,6 +30,7 @@ String _fechaSesion(DateTime fecha) {
 
   return '${dias[fecha.weekday - 1]} ${fecha.day}/${fecha.month}';
 }
+
 class PerfilPage extends StatefulWidget {
   const PerfilPage({super.key});
 
@@ -40,11 +43,21 @@ class _PerfilPageState extends State<PerfilPage> {
 
   // Abre el popup y, si el jugador guarda, actualiza el perfil de toda la app.
   Future<void> _editar(Perfil actual) async {
+    final auth = context.read<AuthProvider>();
     final nuevo = await showDialog<Perfil>(
       context: context,
       builder: (_) => _EditarPerfilDialog(perfil: actual),
     );
-    if (nuevo != null) perfilNotifier.value = nuevo;
+    if (nuevo != null) {
+      final error = await auth.actualizarPerfil(nuevo);
+      if (!mounted) return;
+      if (error != null) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error)));
+        return;
+      }
+      perfilNotifier.value = nuevo;
+    }
   }
 
   @override
@@ -68,15 +81,15 @@ class _PerfilPageState extends State<PerfilPage> {
         final actividadSemana = carga.estaSemana.isEmpty
             ? 'Sin sesiones esta semana'
             : '${carga.estaSemana.length} '
-                '${carga.estaSemana.length == 1 ? 'sesión' : 'sesiones'} · '
-                '${_miles(carga.cargaSemana)} UA';
+                  '${carga.estaSemana.length == 1 ? 'sesión' : 'sesiones'} · '
+                  '${_miles(carga.cargaSemana)} UA';
 
         final ultimaSesionTexto = ultimaSesion == null
             ? 'Aún no registras sesiones'
             : '${ultimaSesion.tipoNombre} · '
-                '${_fechaSesion(ultimaSesion.fecha)} · '
-                '${ultimaSesion.minutos} min · '
-                '${ultimaSesion.carga} UA';
+                  '${_fechaSesion(ultimaSesion.fecha)} · '
+                  '${ultimaSesion.minutos} min · '
+                  '${ultimaSesion.carga} UA';
 
         return SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
@@ -90,10 +103,7 @@ class _PerfilPageState extends State<PerfilPage> {
                 hole: '05 / PERFIL',
               ),
               const SizedBox(height: 16),
-              _JugadorCard(
-                perfil: p,
-                onEditar: () => _editar(p),
-              ),
+              _JugadorCard(perfil: p, onEditar: () => _editar(p)),
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -118,10 +128,7 @@ class _PerfilPageState extends State<PerfilPage> {
               Row(
                 children: [
                   Expanded(
-                    child: _Dato(
-                      label: 'IMC',
-                      valor: coma(imc),
-                    ),
+                    child: _Dato(label: 'IMC', valor: coma(imc)),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -196,6 +203,7 @@ class _PerfilPageState extends State<PerfilPage> {
     );
   }
 }
+
 class _JugadorCard extends StatelessWidget {
   const _JugadorCard({required this.perfil, required this.onEditar});
 
@@ -325,11 +333,7 @@ class _EditarPerfilDialogState extends State<_EditarPerfilDialog> {
           : null;
     });
 
-    final hayError = [
-      _eNombre,
-      _eEdad,
-      _eHandicap,
-    ].any((e) => e != null);
+    final hayError = [_eNombre, _eEdad, _eHandicap].any((e) => e != null);
     if (hayError) return;
 
     Navigator.pop(

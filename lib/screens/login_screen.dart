@@ -14,6 +14,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _nombreCtrl = TextEditingController();
   final _correoCtrl = TextEditingController();
   final _claveCtrl = TextEditingController();
   final _confirmarCtrl = TextEditingController();
@@ -28,6 +29,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void dispose() {
     _correoCtrl.dispose();
+    _nombreCtrl.dispose();
     _claveCtrl.dispose();
     _confirmarCtrl.dispose();
     super.dispose();
@@ -38,10 +40,11 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final auth = context.read<AuthProvider>();
+    final nombre = _nombreCtrl.text.trim();
     final correo = _correoCtrl.text.trim();
     final clave = _claveCtrl.text;
     final error = _registro
-        ? await auth.registrar(correo, clave)
+        ? await auth.registrar(correo, clave, nombre)
         : await auth.entrar(correo, clave);
 
     // Si entró, el AuthGate ya cambió de pantalla y esta dejó de existir.
@@ -59,9 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _aviso(String texto) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(texto)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(texto)));
   }
 
   InputDecoration _decoracion(String label, IconData icono) {
@@ -122,6 +123,18 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: TextStyle(color: scheme.onSurfaceVariant),
                     ),
                     const SizedBox(height: 28),
+                    if (_registro) ...[
+                      TextFormField(
+                        controller: _nombreCtrl,
+                        textCapitalization: TextCapitalization.words,
+                        decoration: _decoracion('Nombre', Icons.person_outline),
+                        validator: (value) =>
+                            value == null || value.trim().isEmpty
+                            ? 'Escribe tu nombre'
+                            : null,
+                      ),
+                      const SizedBox(height: 14),
+                    ],
                     TextFormField(
                       controller: _correoCtrl,
                       keyboardType: TextInputType.emailAddress,
