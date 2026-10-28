@@ -8,10 +8,13 @@ import '../pages/carga_page.dart';
 import '../pages/inicio_page.dart';
 import '../pages/mediciones_page.dart';
 import '../pages/perfil_page.dart';
+import '../perfil.dart';
 import '../theme.dart';
 
 class GolfyMain extends StatefulWidget {
-  const GolfyMain({super.key});
+  const GolfyMain({super.key, this.initialProfile});
+
+  final Perfil? initialProfile;
 
   @override
   State<GolfyMain> createState() => _GolfyMainState();
@@ -19,6 +22,14 @@ class GolfyMain extends StatefulWidget {
 
 class _GolfyMainState extends State<GolfyMain> {
   int _selectedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialProfile != null) {
+      perfilNotifier.value = widget.initialProfile!;
+    }
+  }
 
   // Una pantalla por pestaña, en el MISMO orden que los items de abajo.
   // Inicio recibe una función para saltar a la pestaña Perfil (la última).
@@ -53,6 +64,7 @@ class _GolfyMainState extends State<GolfyMain> {
       await context.read<AuthProvider>().salir();
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -132,7 +144,7 @@ class _GolfyMainState extends State<GolfyMain> {
                   tooltip: 'Cerrar sesión',
                   icon: const Icon(Icons.logout_rounded),
                   onPressed: _confirmarSalida,
-                ),               
+                ),
               ],
             ),
             // IndexedStack mantiene viva cada pestaña: no pierdes lo que registraste

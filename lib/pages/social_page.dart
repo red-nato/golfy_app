@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../perfil.dart';
+
 const _green = Color(0xFF14573A);
 
 // Estado del semáforo: 0 = óptimo, 1 = atención, 2 = reposo.
@@ -76,8 +78,8 @@ class _SocialPageState extends State<SocialPage> {
 
   // Tú, con tu ubicación solo si decides compartirla.
   _Miembro get _yo => _Miembro(
-    'MR',
-    'Matías R. (tú)',
+    perfilNotifier.value.iniciales,
+    '${perfilNotifier.value.nombre} (tú)',
     _compartirUbicacion ? 'En el rango de práctica' : 'Ubicación oculta',
     1,
     enCancha: _compartirUbicacion,
@@ -240,7 +242,8 @@ class _SocialPageState extends State<SocialPage> {
             const SizedBox(height: 12),
             Text(
               'Tú decides qué compartes y puedes pausarlo cuando quieras. '
-              'Los motivos de tu semáforo solo los ve tu entrenador.',
+              'Los motivos de tu semáforo solo los ve tu entrenador. '
+              'Entrenador: aún no hay uno vinculado.',
               style: TextStyle(
                 fontSize: 12,
                 height: 1.4,
@@ -307,7 +310,10 @@ class _Mapa extends StatelessWidget {
               left: 12,
               bottom: 10,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(999),
@@ -548,11 +554,7 @@ class _Opcion extends StatelessWidget {
               ],
             ),
           ),
-          Switch(
-            value: valor,
-            activeTrackColor: _green,
-            onChanged: onChanged,
-          ),
+          Switch(value: valor, activeTrackColor: _green, onChanged: onChanged),
         ],
       ),
     );

@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'golfy_main.dart';
 import 'login_screen.dart';
+import '../perfil.dart';
 
 // El login obligatorio: escucha la sesión de Supabase. Sin sesión muestra el
 // login; con sesión, la app. Al entrar o salir se vuelve a dibujar solo, sin
@@ -18,7 +19,7 @@ class AuthGate extends StatelessWidget {
       builder: (context, _) {
         return auth.currentSession == null
             ? const LoginScreen()
-            : const GolfyMain();
+            : GolfyMain(initialProfile: Perfil.fromUser(auth.currentUser));
       },
     );
   }
