@@ -238,24 +238,18 @@ class _EditarPerfilDialog extends StatefulWidget {
 class _EditarPerfilDialogState extends State<_EditarPerfilDialog> {
   late final _nombre = TextEditingController(text: widget.perfil.nombre);
   late final _edad = TextEditingController(text: '${widget.perfil.edad}');
-  late final _peso = TextEditingController(text: coma(widget.perfil.peso));
-  late final _estatura = TextEditingController(
-    text: coma(widget.perfil.estatura, 2),
-  );
   late final _handicap = TextEditingController(
     text: coma(widget.perfil.handicap),
   );
   late bool _derecha = widget.perfil.manoDerecha;
 
   // Mensajes de error (null = el dato está bien).
-  String? _eNombre, _eEdad, _ePeso, _eEstatura, _eHandicap;
+  String? _eNombre, _eEdad, _eHandicap;
 
   @override
   void dispose() {
     _nombre.dispose();
     _edad.dispose();
-    _peso.dispose();
-    _estatura.dispose();
     _handicap.dispose();
     super.dispose();
   }
@@ -266,17 +260,11 @@ class _EditarPerfilDialogState extends State<_EditarPerfilDialog> {
   void _guardar() {
     final nombre = _nombre.text.trim();
     final edad = int.tryParse(_edad.text.trim());
-    final peso = _numero(_peso.text);
-    final estatura = _numero(_estatura.text);
     final handicap = _numero(_handicap.text);
 
     setState(() {
       _eNombre = nombre.isEmpty ? 'Escribe tu nombre' : null;
       _eEdad = (edad == null || edad < 10 || edad > 99) ? '10 a 99' : null;
-      _ePeso = (peso == null || peso < 30 || peso > 200) ? '30 a 200 kg' : null;
-      _eEstatura = (estatura == null || estatura < 1.2 || estatura > 2.3)
-          ? '1,20 a 2,30 m'
-          : null;
       _eHandicap = (handicap == null || handicap < -5 || handicap > 54)
           ? '−5 a 54'
           : null;
@@ -285,8 +273,6 @@ class _EditarPerfilDialogState extends State<_EditarPerfilDialog> {
     final hayError = [
       _eNombre,
       _eEdad,
-      _ePeso,
-      _eEstatura,
       _eHandicap,
     ].any((e) => e != null);
     if (hayError) return;
@@ -296,8 +282,8 @@ class _EditarPerfilDialogState extends State<_EditarPerfilDialog> {
       Perfil(
         nombre: nombre,
         edad: edad!,
-        peso: peso!,
-        estatura: estatura!,
+        peso: widget.perfil.peso,
+        estatura: widget.perfil.estatura,
         handicap: handicap!,
         manoDerecha: _derecha,
       ),
@@ -346,17 +332,6 @@ class _EditarPerfilDialogState extends State<_EditarPerfilDialog> {
                   Expanded(child: _campo('Edad', _edad, _eEdad)),
                   const SizedBox(width: 12),
                   Expanded(child: _campo('Hándicap', _handicap, _eHandicap)),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: _campo('Peso (kg)', _peso, _ePeso)),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _campo('Estatura (m)', _estatura, _eEstatura),
-                  ),
                 ],
               ),
               const SizedBox(height: 16),
