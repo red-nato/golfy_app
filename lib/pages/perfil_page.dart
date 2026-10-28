@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-
+import 'package:provider/provider.dart';
+import '../providers/mediciones_provider.dart';
 import '../perfil.dart';
 import '../widgets/golf_identity.dart';
 
@@ -32,6 +33,12 @@ class _PerfilPageState extends State<PerfilPage> {
     return ValueListenableBuilder<Perfil>(
       valueListenable: perfilNotifier,
       builder: (context, p, _) {
+        final ultima = context.watch<MedicionesProvider>().ultima;
+
+        final peso = ultima?.peso ?? p.peso;
+        final estatura = ultima?.estatura ?? p.estatura;
+        final imc = ultima?.imc ?? p.imc;
+        final pulso = ultima?.pulso;
         return SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
           child: Column(
@@ -51,7 +58,7 @@ class _PerfilPageState extends State<PerfilPage> {
                   Expanded(
                     child: _Dato(
                       label: 'Peso',
-                      valor: coma(p.peso),
+                      valor: coma(peso),
                       unidad: 'kg',
                     ),
                   ),
@@ -59,7 +66,7 @@ class _PerfilPageState extends State<PerfilPage> {
                   Expanded(
                     child: _Dato(
                       label: 'Estatura',
-                      valor: coma(p.estatura, 2),
+                      valor: coma(estatura, 2),
                       unidad: 'm',
                     ),
                   ),
@@ -69,14 +76,17 @@ class _PerfilPageState extends State<PerfilPage> {
               Row(
                 children: [
                   Expanded(
-                    child: _Dato(label: 'IMC', valor: coma(p.imc)),
+                    child: _Dato(
+                      label: 'IMC',
+                      valor: coma(imc),
+                    ),
                   ),
                   const SizedBox(width: 10),
-                  const Expanded(
+                  Expanded(
                     child: _Dato(
                       label: 'Pulso en reposo',
-                      valor: '58',
-                      unidad: 'lpm',
+                      valor: pulso == null ? '—' : '$pulso',
+                      unidad: pulso == null ? '' : 'lpm',
                     ),
                   ),
                 ],
