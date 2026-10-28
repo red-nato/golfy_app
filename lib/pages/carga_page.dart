@@ -1,7 +1,10 @@
 import 'dart:math' show max;
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../models/sesion_carga.dart';
+import '../providers/carga_provider.dart';
 import '../widgets/golf_identity.dart';
 
 const _green = Color(0xFF14573A);
@@ -18,19 +21,7 @@ const _dias = [
   'Domingo',
 ];
 const _letras = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
-const _hoy = 3; // jueves
 const _promedio = 949; // promedio semanal de las últimas 4 semanas (UA)
-
-// Una sesión de entrenamiento. Carga = minutos × esfuerzo percibido (UA).
-class _Sesion {
-  const _Sesion(this.tipo, this.minutos, this.esfuerzo);
-
-  final int tipo; // posición en _tipos
-  final int minutos;
-  final int esfuerzo;
-
-  int get carga => minutos * esfuerzo;
-}
 
 // 1310 -> "1.310"
 String _miles(int n) {
@@ -47,36 +38,46 @@ class CargaPage extends StatefulWidget {
 }
 
 class _CargaPageState extends State<CargaPage> {
-  // Sesión registrada en cada día de la semana (null = nada registrado).
-  final List<_Sesion?> _semana = [
-    const _Sesion(0, 60, 6), // lunes · Rango · 360 UA
-    const _Sesion(2, 90, 5), // martes · Ronda · 450 UA
-    const _Sesion(3, 100, 5), // miércoles · Gimnasio · 500 UA
-    null,
-    null,
-    null,
-    null,
-  ];
-
   // Valores del formulario.
   int _tipo = 0;
   int _minutos = 90;
   int _esfuerzo = 6;
 
-  bool _abierto = false; // formulario desplegado
-  int? _editando; // día que se está modificando (null = registrando hoy)
+  bool _abierto = false;
+  int? _editando;
 
-  int get _total => _semana.fold<int>(0, (suma, s) => suma + (s?.carga ?? 0));
+  CargaProvider get _carga => context.read<CargaProvider>();
+
+  List<SesionCarga?> get _semana => _carga.semanaActual;
+
+  int get _hoy => DateTime.now().weekday - 1;
+
+  int get _total => _carga.cargaSemana;
+
   int get _cargaForm => _minutos * _esfuerzo;
 
   void _cambiarMinutos(int delta) {
-    setState(() => _minutos = (_minutos + delta).clamp(10, 240).toInt());
+    setState(() {
+      _minutos = (_minutos + delta).clamp(10, 240).toInt();
+    });
   }
 
   void _guardar() {
     final dia = _editando ?? _hoy;
+
+    final ahora = DateTime.now();
+    final hoy = DateTime(ahora.year, ahora.month, ahora.day);
+    final lunes = hoy.subtract(Duration(days: hoy.weekday - 1));
+    final fecha = lunes.add(Duration(days: dia));
+
+    _carga.guardar(
+      fecha: fecha,
+      tipo: _tipo,
+      minutos: _minutos,
+      esfuerzo: _esfuerzo,
+    );
+
     setState(() {
-      _semana[dia] = _Sesion(_tipo, _minutos, _esfuerzo);
       _editando = null;
       _abierto = false;
     });
@@ -89,30 +90,39 @@ class _CargaPageState extends State<CargaPage> {
     });
   }
 
-  // Tocar una barra: si hay sesión, ofrece modificar o eliminar.
   Future<void> _tocarBarra(int dia) async {
     final sesion = _semana[dia];
 
     if (sesion == null) {
-      // Barra vacía de hoy: abre el formulario.
-      if (dia == _hoy && _editando == null) setState(() => _abierto = true);
+      if (dia == _hoy && _editando == null) {
+        setState(() => _abierto = true);
+      }
       return;
     }
 
     final accion = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
-      builder: (_) => _OpcionesSesion(dia: _dias[dia], sesion: sesion),
+      builder: (_) => _OpcionesSesion(
+        dia: _dias[dia],
+        sesion: sesion,
+      ),
     );
+
     if (!mounted || accion == null) return;
 
     if (accion == 'eliminar') {
+      _carga.eliminar(sesion.fecha);
+
       setState(() {
-        _semana[dia] = null;
-        if (_editando == dia) _editando = null;
+        if (_editando == dia) {
+          _editando = null;
+        }
       });
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Sesión eliminada')));
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Sesión eliminada')),
+      );
     } else if (accion == 'modificar') {
       setState(() {
         _tipo = sesion.tipo;
@@ -126,9 +136,13 @@ class _CargaPageState extends State<CargaPage> {
 
   @override
   Widget build(BuildContext context) {
-    final sesionHoy = _semana[_hoy];
+    // Escucha cambios del provider para actualizar el gráfico y la pantalla.
+    context.watch<CargaProvider>();
+
+    final semana = _semana;
+    final sesionHoy = semana[_hoy];
     final registradaHoy = sesionHoy != null && _editando == null;
-    // La barra "fantasma" de hoy solo se ve mientras abres el formulario.
+
     final previa = (_abierto && _editando == null && sesionHoy == null)
         ? _cargaForm
         : null;
@@ -146,7 +160,7 @@ class _CargaPageState extends State<CargaPage> {
           ),
           const SizedBox(height: 14),
           _SemanaCard(
-            semana: _semana,
+            semana: semana,
             total: _total,
             previa: previa,
             onTapBarra: _tocarBarra,
@@ -163,7 +177,6 @@ class _CargaPageState extends State<CargaPage> {
     );
   }
 
-  // Tarjeta desplegable "Registrar sesión".
   Widget _tarjetaFormulario(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final editando = _editando;
@@ -178,7 +191,6 @@ class _CargaPageState extends State<CargaPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Encabezado: al tocarlo se despliega o se pliega.
           InkWell(
             onTap: editando != null
                 ? null
@@ -236,7 +248,6 @@ class _CargaPageState extends State<CargaPage> {
     );
   }
 
-  // Los campos del formulario (tipo, duración, esfuerzo y guardar).
   Widget _campos(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final editando = _editando != null;
@@ -244,7 +255,6 @@ class _CargaPageState extends State<CargaPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Tipo de sesión
         Row(
           children: [
             for (var i = 0; i < _tipos.length; i++) ...[
@@ -260,7 +270,6 @@ class _CargaPageState extends State<CargaPage> {
           ],
         ),
         const SizedBox(height: 14),
-        // Duración
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -294,7 +303,6 @@ class _CargaPageState extends State<CargaPage> {
           ],
         ),
         const SizedBox(height: 14),
-        // Esfuerzo
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -304,7 +312,10 @@ class _CargaPageState extends State<CargaPage> {
             ),
             Text(
               '1 muy suave · 10 máximo',
-              style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
+              style: TextStyle(
+                fontSize: 12,
+                color: scheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),
@@ -321,7 +332,6 @@ class _CargaPageState extends State<CargaPage> {
           onChanged: (n) => setState(() => _esfuerzo = n),
         ),
         const SizedBox(height: 14),
-        // Guardar
         Material(
           color: scheme.inverseSurface,
           borderRadius: BorderRadius.circular(16),
@@ -364,7 +374,7 @@ class _SemanaCard extends StatelessWidget {
     required this.onTapBarra,
   });
 
-  final List<_Sesion?> semana;
+  final List<SesionCarga?> semana;
   final int total;
   final int? previa; // carga del formulario, para la barra fantasma de hoy
   final ValueChanged<int> onTapBarra;
@@ -455,7 +465,8 @@ class _SemanaCard extends StatelessWidget {
   Widget _columna(BuildContext context, int i, double tope) {
     final scheme = Theme.of(context).colorScheme;
     final sesion = semana[i];
-    final esHoy = i == _hoy;
+    final hoy = DateTime.now().weekday - 1;
+    final esHoy = i == hoy;
 
     Widget barra = const SizedBox(width: 30, height: 0);
     if (sesion != null) {
@@ -569,11 +580,11 @@ class _Alerta extends StatelessWidget {
 }
 
 // Reemplaza al formulario cuando ya registraste la sesión de hoy: verde y
-// sin desplegar. Para cambiarla, toca la barra del jueves.
+// sin desplegar. Para cambiarla, toca la barra de hoy.
 class _TarjetaRegistrada extends StatelessWidget {
   const _TarjetaRegistrada({required this.sesion});
 
-  final _Sesion sesion;
+  final SesionCarga sesion;
 
   @override
   Widget build(BuildContext context) {
@@ -603,7 +614,7 @@ class _TarjetaRegistrada extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${_tipos[sesion.tipo]} · ${sesion.minutos} min × '
+                  '${sesion.tipoNombre} · ${sesion.minutos} min × '
                   '${sesion.esfuerzo} = ${sesion.carga} UA',
                   style: const TextStyle(
                     fontSize: 15,
@@ -612,7 +623,7 @@ class _TarjetaRegistrada extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 const Text(
-                  'Toca la barra del jueves para modificarla o eliminarla.',
+                  'Toca la barra de hoy para modificarla o eliminarla.',
                   style: TextStyle(fontSize: 12, color: _mint),
                 ),
               ],
@@ -629,7 +640,7 @@ class _OpcionesSesion extends StatelessWidget {
   const _OpcionesSesion({required this.dia, required this.sesion});
 
   final String dia;
-  final _Sesion sesion;
+  final SesionCarga sesion;
 
   @override
   Widget build(BuildContext context) {

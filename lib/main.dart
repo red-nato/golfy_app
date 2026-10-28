@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'providers/auth_provider.dart';
 import 'providers/clima_provider.dart';
 import 'providers/mediciones_provider.dart';
+import 'providers/carga_provider.dart';
 import 'screens/auth_gate.dart';
 import 'theme.dart';
 
@@ -24,6 +25,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => ClimaProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => MedicionesProvider()),
+        ChangeNotifierProvider(create: (_) => CargaProvider()),
       ],
       child: const MyApp(),
     ),

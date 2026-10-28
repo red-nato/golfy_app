@@ -1,11 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../providers/carga_provider.dart';
 import '../providers/mediciones_provider.dart';
 import '../perfil.dart';
 import '../widgets/golf_identity.dart';
 
 const _green = Color(0xFF14573A);
+String _miles(int numero) {
+  final texto = numero.toString();
 
+  if (texto.length <= 3) return texto;
+
+  return '${texto.substring(0, texto.length - 3)}.'
+      '${texto.substring(texto.length - 3)}';
+}
+
+String _fechaSesion(DateTime fecha) {
+  const dias = [
+    'lunes',
+    'martes',
+    'miércoles',
+    'jueves',
+    'viernes',
+    'sábado',
+    'domingo',
+  ];
+
+  return '${dias[fecha.weekday - 1]} ${fecha.day}/${fecha.month}';
+}
 class PerfilPage extends StatefulWidget {
   const PerfilPage({super.key});
 
@@ -27,18 +49,35 @@ class _PerfilPageState extends State<PerfilPage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    final scheme = Theme.of(context).colorScheme;
 
     return ValueListenableBuilder<Perfil>(
       valueListenable: perfilNotifier,
       builder: (context, p, _) {
-        final ultima = context.watch<MedicionesProvider>().ultima;
+        final mediciones = context.watch<MedicionesProvider>();
+        final carga = context.watch<CargaProvider>();
 
-        final peso = ultima?.peso ?? p.peso;
-        final estatura = ultima?.estatura ?? p.estatura;
-        final imc = ultima?.imc ?? p.imc;
-        final pulso = ultima?.pulso;
+        final ultimaMedicion = mediciones.ultima;
+        final ultimaSesion = carga.ultima;
+
+        final peso = ultimaMedicion?.peso ?? p.peso;
+        final estatura = ultimaMedicion?.estatura ?? p.estatura;
+        final imc = ultimaMedicion?.imc ?? p.imc;
+        final pulso = ultimaMedicion?.pulso;
+
+        final actividadSemana = carga.estaSemana.isEmpty
+            ? 'Sin sesiones esta semana'
+            : '${carga.estaSemana.length} '
+                '${carga.estaSemana.length == 1 ? 'sesión' : 'sesiones'} · '
+                '${_miles(carga.cargaSemana)} UA';
+
+        final ultimaSesionTexto = ultimaSesion == null
+            ? 'Aún no registras sesiones'
+            : '${ultimaSesion.tipoNombre} · '
+                '${_fechaSesion(ultimaSesion.fecha)} · '
+                '${ultimaSesion.minutos} min · '
+                '${ultimaSesion.carga} UA';
+
         return SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
           child: Column(
@@ -51,7 +90,10 @@ class _PerfilPageState extends State<PerfilPage> {
                 hole: '05 / PERFIL',
               ),
               const SizedBox(height: 16),
-              _JugadorCard(perfil: p, onEditar: () => _editar(p)),
+              _JugadorCard(
+                perfil: p,
+                onEditar: () => _editar(p),
+              ),
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -108,7 +150,9 @@ class _PerfilPageState extends State<PerfilPage> {
                       p.manoDerecha ? 'Derecha' : 'Izquierda',
                     ),
                     Divider(height: 1, color: scheme.outlineVariant),
-                    const _Fila('Práctica', 'Mar · Jue · Sáb'),
+                    _Fila('Actividad esta semana', actividadSemana),
+                    Divider(height: 1, color: scheme.outlineVariant),
+                    _Fila('Última sesión', ultimaSesionTexto),
                     Divider(height: 1, color: scheme.outlineVariant),
                     SizedBox(
                       height: 56,
@@ -124,7 +168,9 @@ class _PerfilPageState extends State<PerfilPage> {
                           Switch(
                             value: _recordatorio,
                             activeTrackColor: _green,
-                            onChanged: (v) => setState(() => _recordatorio = v),
+                            onChanged: (v) {
+                              setState(() => _recordatorio = v);
+                            },
                           ),
                         ],
                       ),
@@ -150,7 +196,6 @@ class _PerfilPageState extends State<PerfilPage> {
     );
   }
 }
-
 class _JugadorCard extends StatelessWidget {
   const _JugadorCard({required this.perfil, required this.onEditar});
 
